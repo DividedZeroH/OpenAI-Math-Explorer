@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Math Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        book: {
+                            bg: '#F4F0E6',
+                            text: '#2D2A26',
+                            title: '#4A3F35',
+                            link: '#6B4F2A',
+                            border: '#CFC4B4',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']]
+            },
+            startup: {
+                typeset: false
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .family-card { transition: transform 0.2s; }
+        .family-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .abstract { display: none; }
+        .abstract.expanded { display: block; }
+        
+        .filter-tray::-webkit-scrollbar { height: 6px; }
+        .filter-tray::-webkit-scrollbar-track { background: #f1f1f1; }
+        .filter-tray::-webkit-scrollbar-thumb { background: #c7c7cc; }
+        .filter-tray::-webkit-scrollbar-thumb:hover { background: #a1a1a6; }
+    </style>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body class="bg-book-bg text-book-text">
+    <header class="bg-[#FCFAF5] shadow-sm sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center">
+                <h1 class="text-2xl font-bold text-book-title" data-i18n="title">OpenAI Math Explorer</h1>
+                
+                <div class="flex items-center space-x-4 mt-4 sm:mt-0 w-full sm:w-auto">
+                    
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-book-border flex items-center justify-between">
+                <div class="flex items-center space-x-4 flex-1 overflow-hidden filter-tray overflow-x-auto pb-2">
+                    <span class="text-sm font-medium text-book-text whitespace-nowrap" data-i18n="filter_by">Filtrar por:</span>
+                    <select id="disciplineFilter" class="text-sm bg-[#E0D5BE] text-book-text font-bold border-2 border-[#A89A86] rounded-none shadow-sm focus:ring-book-border focus:border-book-border py-1.5 pl-3 pr-8">
+                        <option value="all" data-i18n="all_disciplines">All disciplines</option>
+                        <!-- Options injected by JS -->
+                    </select>
+                    
+                    
+                </div>
+            </div>
+        </div>
+                  <div class="mt-6 border-b border-book-border">
+                  <nav class="-mb-px flex space-x-8">
+                      <button id="btnTabList" onclick="switchTab('list')" data-i18n="tab_list" class="border-book-title text-book-text whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                          Catalog
+                      </button>
+                      <button id="btnTabGraph" onclick="switchTab('graph')" data-i18n="tab_graph" class="border-transparent text-book-text opacity-70 hover:opacity-100 hover:border-book-border whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
+                          Relationship Graph
+                      </button>
+                  </nav>
+              </div>
+</header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- VISTA DE GRAFO -->
+        <div id="graphView" class="hidden">
+            <div id="networkGraph" class="w-full h-[600px] bg-[#FCFAF5] border border-book-border shadow-sm"></div>
+        </div>
+        
+        <!-- VISTA DE LISTA -->
+        <div id="listView">
+        <div id="stats" class="mb-8 text-book-text  text-sm" data-i18n="loading">Loading data...</div>
+        
+        <div id="resultsList" class="space-y-6">
+            <!-- Results will be injected here -->
+        </div>
+    </main>
+
+    </div>
+    <footer class="bg-[#FCFAF5] border-t border-book-border mt-12 py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-book-text ">
+            <p class="mb-2 font-medium text-book-text" data-i18n="sources_title">Sources & References</p>
+            <div class="flex flex-wrap justify-center space-x-4">
+                <a href="https://github.com/openai/math" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
+                    GitHub Repository (openai/math)
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="../README.md" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
+                    README
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="../overview.pdf" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
+                    Overview PDF
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="../CONTENTS.md" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
+                    Contents Map
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let familiesData = [];
+        let currentLang = 'en';
+
+        const i18n = {
+            'es': {
+                'title': 'OpenAI Math Explorer',
+                'filter_by': 'Filtrar por:',
+                'all_disciplines': 'Todas las disciplinas',
+                'only_lean': 'Solo con Lean',
+                'loading': 'Cargando datos...',
+                'showing': 'Mostrando {filtered} familias de resultados (de {total}).',
+                'problem': 'Problema',
+                'documents': 'documento(s)',
+                'manuscripts': 'Manuscritos',
+                'toggle_abstract': 'Ver/Ocultar Abstract',
+                'no_abstract': 'Sin abstract.',
+                'lean_title': 'Contiene formalización en Lean',
+                'sources_title': 'Fuentes y Referencias',
+                'tab_list': 'Catálogo',
+                'tab_graph': 'Grafo de Relaciones',
+                'graph_sample': 'Gráfico de Ciclos Algebraicos',
+                'graph_elliptic': 'Curva Elíptica (Ejemplo)',
+                'graph_zeta': 'Ceros de la Función Zeta'
+            },
+            'en': {
+                'title': 'OpenAI Math Explorer',
+                'filter_by': 'Filter by:',
+                'all_disciplines': 'All disciplines',
+                'only_lean': 'Only with Lean',
+                'loading': 'Loading data...',
+                'showing': 'Showing {filtered} result families (out of {total}).',
+                'problem': 'Problem',
+                'documents': 'document(s)',
+                'manuscripts': 'Manuscripts',
+                'toggle_abstract': 'Show/Hide Abstract',
+                'no_abstract': 'No abstract available.',
+                'lean_title': 'Contains Lean formalization',
+                'sources_title': 'Sources & References',
+                'tab_list': 'Catalog',
+                'tab_graph': 'Relationship Graph',
+                'graph_sample': 'Algebraic Cycles Graph',
+                'graph_elliptic': 'Elliptic Curve (Example)',
+                'graph_zeta': 'Zeta Function Zeros'
+            },
+            'pt': {
+                'title': 'Explorador OpenAI Math',
+                'filter_by': 'Filtrar por:',
+                'all_disciplines': 'Todas as disciplinas',
+                'only_lean': 'Apenas com Lean',
+                'loading': 'Carregando dados...',
+                'showing': 'Mostrando {filtered} famílias de resultados (de {total}).',
+                'problem': 'Problema',
+                'documents': 'documento(s)',
+                'manuscripts': 'Manuscritos',
+                'toggle_abstract': 'Ver/Ocultar Resumo',
+                'no_abstract': 'Sem resumo.',
+                'lean_title': 'Contém formalização em Lean',
+                'sources_title': 'Fontes e Referências',
+                'tab_list': 'Catálogo',
+                'tab_graph': 'Grafo de Relações',
+                'graph_sample': 'Gráfico de Ciclos Algébricos',
+                'graph_elliptic': 'Curva Elíptica (Exemplo)',
+                'graph_zeta': 'Zeros da Função Zeta'
+            }
+        };
+
+        function translateUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) {
+                    el.textContent = i18n[currentLang][key];
+                }
+            });
+            applyFilters(); // Re-render text strings in results
+        }
+
+        
+
+        
+        function fixMathNotation(text) {
+            if (!text) return text;
+            return text.replace(/\$\`(.*?)\`\$/g, '\\(\$1\\)');
+        }
+
+        
+        
+
+        function renderMarkdownLinks(text) {
+            if (!text) return text;
+            // Parse Markdown links [Text](URL)
+            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-book-link hover:underline font-bold">$1</a>');
+        }
+
+        
+
+        
+        function switchTab(tab) {
+            const listBtn = document.getElementById('btnTabList');
+            const graphBtn = document.getElementById('btnTabGraph');
+            const listView = document.getElementById('listView');
+            const graphView = document.getElementById('graphView');
+
+            if (tab === 'list') {
+                listBtn.className = "border-book-title text-book-text whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
+                graphBtn.className = "border-transparent text-book-text hover:text-book-text hover:border-book-border whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
+                listView.classList.remove('hidden');
+                graphView.classList.add('hidden');
+            } else {
+                graphBtn.className = "border-book-title text-book-text whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
+                listBtn.className = "border-transparent text-book-text hover:text-book-text hover:border-book-border whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
+                listView.classList.add('hidden');
+                graphView.classList.remove('hidden');
+                
+                // Initialize graph if not already done
+                if (!window.graphInitialized && familiesData.length > 0) {
+                    initGraph(familiesData);
+                    window.graphInitialized = true;
+                }
+            }
+        }
+
+
+        function initGraph(data) {
+            function cleanForGraph(str) {
+                if (!str) return "";
+                // Remove HTML tags like <i>
+                str = str.replace(/<[^>]+>/g, '');
+                // Remove the $, `, and \ symbols from math to make it readable plain text
+                str = str.replace(/[\\$\\`\\\\]/g, '');
+                // Replace common math commands
+                str = str.replace(/mathsf|mathbb|mathcal|mathrm/g, '');
+                // Clean up braces
+                str = str.replace(/[{}]/g, '');
+                return str;
+            }
+            
+            function wrapText(str, width) {
+                if (!str) return "";
+                str = cleanForGraph(str);
+                const words = str.split(' ');
+                let line = '';
+                let result = '';
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    if (testLine.length > width && n > 0) {
+                        result += line + '
+';
+                        line = words[n] + ' ';
+                    } else {
+                        line = testLine;
+                    }
+                }
+                result += line;
+                return result.trim();
+            }
+            
+            const nodes = [];
+
+            const edges = [];
+            const disciplines = new Set();
+            
+            // Collect disciplines
+            data.forEach(f => {
+                if(f.discipline) disciplines.add(f.discipline);
+            });
+
+            // Create discipline nodes (central hubs)
+            disciplines.forEach(d => {
+                nodes.push({
+                    id: `disc-${d}`,
+                    label: d,
+                    shape: 'box',
+                    font: { color: '#F4F0E6', face: 'system-ui', size: 16 },
+                    color: {
+                        background: '#2D2A26',
+                        border: '#000000',
+                        highlight: { background: '#4A3F35', border: '#000000' }
+                    },
+                    margin: 10
+                });
+            });
+
+            // Create problem nodes and connect them
+            data.forEach(f => {
+                
+                nodes.push({
+                    id: f.id,
+                    label: wrapText(f.title, 25),
+                    title: cleanForGraph(f.title),
+shape: 'dot',
+                    size: 8,
+                    font: { color: '#000000', face: 'system-ui', size: 12 },
+                    color: {
+                        background: '#F4F0E6',
+                        border: '#CFC4B4',
+                        highlight: { background: '#FCFAF5', border: '#6B4F2A' }
+                    }
+                });
+
+                if (f.discipline) {
+                    edges.push({
+                        from: f.id,
+                        to: `disc-${f.discipline}`,
+                        color: { color: '#CFC4B4', highlight: '#6B4F2A' },
+                        width: 1
+                    });
+                }
+            });
+
+            const container = document.getElementById('networkGraph');
+            const graphData = { nodes: nodes, edges: edges };
+            const options = {
+                physics: {
+                    forceAtlas2Based: {
+                        gravitationalConstant: -50,
+                        centralGravity: 0.01,
+                        springLength: 100,
+                        springConstant: 0.08
+                    },
+                    maxVelocity: 50,
+                    solver: 'forceAtlas2Based',
+                    timestep: 0.35,
+                    stabilization: { iterations: 150 }
+                },
+                interaction: { hover: true, tooltipDelay: 200 }
+            };
+            new vis.Network(container, graphData, options);
+        }
+
+        async function loadData() {
+            try {
+                const response = await fetch('data.json?t=' + new Date().getTime());
+                familiesData = await response.json();
+                
+                const disciplines = [...new Set(familiesData.map(f => f.discipline))].sort();
+                const select = document.getElementById('disciplineFilter');
+                disciplines.forEach(d => {
+                    if (d !== "Other" && d !== "General") {
+                        const option = document.createElement('option');
+                        option.value = d;
+                        option.textContent = d;
+                        select.appendChild(option);
+                    }
+                });
+                
+                translateUI();
+                applyFilters();
+            } catch (error) {
+                console.error("Error loading data:", error);
+                document.getElementById('stats').innerText = "Error al cargar los datos.";
+            }
+        }
+
+        function renderResults(families, totalCount) {
+            const container = document.getElementById('resultsList');
+            container.innerHTML = '';
+            
+            const lang = i18n[currentLang];
+
+            families.forEach(family => {
+                const card = document.createElement('div');
+                card.className = 'family-card bg-[#FCFAF5] rounded-none shadow-sm border border-book-border overflow-hidden';
+                
+                let papersHtml = family.papers.map((paper, index) => {
+                    let abstract = paper.abstract.replace(/&emsp;/g, '').trim();
+                    abstract = renderMarkdownLinks(fixMathNotation(abstract));
+                    let title = fixMathNotation(paper.title);
+                    let paperId = `paper-${family.id}-${index}`;
+                    
+                    let leanBadge = paper.has_lean 
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-none text-xs font-medium bg-pink-600 text-white ml-2 border border-pink-700" title="${lang.lean_title}">Lean</span>`
+                        : '';
+
+                    let abstractContent = abstract || lang.no_abstract;
+                    
+
+                    return `
+                        <div class="mt-4 pt-4 border-t border-book-border">
+                            <a href="../${paper.url}" target="_blank" class="text-md font-medium text-book-text hover:text-book-text font-bold flex items-center flex-wrap">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                <span>${title}</span>
+                                ${leanBadge}
+                            </a>
+                            <button onclick="document.getElementById('${paperId}').classList.toggle('expanded')" class="text-xs text-book-text font-bold mt-1 mb-2 hover:text-book-link underline focus:outline-none">
+                                ${lang.toggle_abstract}
+                            </button>
+                            <div id="${paperId}" class="abstract text-sm text-book-text  mt-1 bg-book-bg p-3 rounded-none">
+                                ${abstractContent}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-900 text-white">
+                                    ${lang.problem} ${family.id}
+                                </span>
+                                <span class="px-2.5 py-0.5 rounded-none text-xs font-medium bg-[#FCFAF5] text-book-text font-bold border border-book-border">
+                                    ${family.discipline}
+                                </span>
+                                ${family.has_lean ? '<span class="px-2.5 py-0.5 rounded-none text-xs font-medium bg-pink-600 text-white border border-pink-700">Lean</span>' : ''}
+                            </div>
+                            <span class="text-xs text-book-text ">${family.papers.length} ${lang.documents}</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-book-title mb-2">${fixMathNotation(family.title)}</h2>
+                        <p class="text-sm text-book-text mb-4">${renderMarkdownLinks(fixMathNotation(family.description))}</p>
+                        
+                        <div class="bg-book-bg -mx-6 -mb-6 px-6 py-4">
+                            <h3 class="text-sm font-semibold text-book-title uppercase tracking-wider mb-2">${lang.manuscripts}</h3>
+                            ${papersHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([container]).catch(function (err) {
+                    console.error("MathJax error: ", err.message);
+                });
+            }
+        }
+
+        function applyFilters() {
+            const discipline = document.getElementById('disciplineFilter').value;
+            const filtered = familiesData.filter(family => {
+              

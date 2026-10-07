@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/math_web/index.html"
+    },
+    {
+      "source": "/math_web/(.*)",
+      "destination": "/math_web/$1"
+    },
+    {
+      "source": "/preprints/(.*)",
+      "destination": "/preprints/$1"
+    },
+    {
+      "source": "/(data\\.json|.*\\.py|.*\\.js|.*\\.css)",
+      "destination": "/math_web/$1"
+    }
+  ]
+}
