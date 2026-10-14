@@ -1,19 +1,66 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": false,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/preprints/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/pdf"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "inline"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.pdf)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/pdf"
+        },
+        {
+          "key": "Content-Disposition",
+          "value": "inline"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/",
       "destination": "/math_web/index.html"
     },
     {
-      "source": "/math_web/(.*)",
-      "destination": "/math_web/$1"
+      "source": "/data.json",
+      "destination": "/math_web/data.json"
+    },
+    {
+      "source": "/math_web/preprints/(.*)",
+      "destination": "/preprints/$1"
     },
     {
       "source": "/preprints/(.*)",
       "destination": "/preprints/$1"
     },
     {
-      "source": "/(data\\.json|.*\\.py|.*\\.js|.*\\.css)",
+      "source": "/reasoning_traces/(.*)",
+      "destination": "/reasoning_traces/$1"
+    },
+    {
+      "source": "/math_web/(.*)",
       "destination": "/math_web/$1"
     }
   ]
