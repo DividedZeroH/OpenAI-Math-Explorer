@@ -3,26 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenAI Math Explorer</title>
+    <title>OpenAI Math Explorer — Visual System</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        book: {
-                            bg: '#F4F0E6',
-                            text: '#2D2A26',
-                            title: '#4A3F35',
-                            link: '#6B4F2A',
-                            border: '#CFC4B4',
+                        ataraxis: {
+                            canvas: '#F5F2EF',       // Clinical off-white canvas (--color-gray--gray-5)
+                            card: '#FFFFFF',         // Crisp pure white cards
+                            subcard: '#FAF8F5',      // Manuscript drawer background
+                            border: '#D8D5D2',       // Hairline structural border (--color-gray--gray-20)
+                            borderSoft: '#E8E5E2',   // Secondary inner divider
+                            primary: '#123C3B',      // Signature Deep Pine / Teal (--color-green--green-90)
+                            primaryHover: '#1B4F4E', // Elevated teal hover
+                            pineLight: '#27433F',    // Deep forest slate
+                            sage: '#D4EDE9',         // Mint sage badge tint (--color-green--green-10)
+                            sageDark: '#2D5750',     // Contrasting text for sage
+                            textDark: '#1A1D20',     // High contrast headings
+                            textBody: '#44423F',     // Crisp readable body text (--color-gray--gray-90)
+                            textMuted: '#6E6B67',    // Secondary label text (--color-gray--gray-70)
                         }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'Menlo', 'Monaco', 'Consolas', 'monospace']
                     }
                 }
             }
         }
     </script>
     
+    <!-- MathJax Configuration -->
     <script>
         window.MathJax = {
             tex: {
@@ -35,104 +55,214 @@
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    
+    <!-- Ataraxis Design System Custom Styles -->
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .family-card { transition: transform 0.2s; }
-        .family-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .abstract { display: none; }
-        .abstract.expanded { display: block; }
-        
-        .filter-tray::-webkit-scrollbar { height: 6px; }
-        .filter-tray::-webkit-scrollbar-track { background: #f1f1f1; }
-        .filter-tray::-webkit-scrollbar-thumb { background: #c7c7cc; }
-        .filter-tray::-webkit-scrollbar-thumb:hover { background: #a1a1a6; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            background-color: #F5F2EF;
+            color: #44423F;
+        }
+
+        /* Subtle smooth elevation for Ataraxis cards */
+        .family-card {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .family-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -6px rgba(18, 60, 59, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+            border-color: #A9C9C2;
+        }
+
+        .abstract {
+            display: none;
+        }
+        .abstract.expanded {
+            display: block;
+        }
+
+        /* Beautiful integrated highlight styling for mathematical theorems */
+        .family-card p span.underline,
+        .family-card div span.underline {
+            text-decoration-color: #91B3AC !important;
+            text-decoration-thickness: 1.5px !important;
+            text-underline-offset: 3px !important;
+        }
+
+        /* Custom scrollbar matching Ataraxis palette */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #EDEAE7;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C4BFBA;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9F9B96;
+        }
     </style>
+    
+    <!-- Vis Network Graph -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
-<body class="bg-book-bg text-book-text">
-    <header class="bg-[#FCFAF5] shadow-sm sticky top-0 z-10">
-        <div class="max-w-6xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col sm:flex-row justify-between items-center">
-                <h1 class="text-2xl font-bold text-book-title" data-i18n="title">OpenAI Math Explorer</h1>
-                
-                <div class="flex items-center space-x-4 mt-4 sm:mt-0 w-full sm:w-auto">
-                    
-                </div>
-            </div>
-            
-            <div class="mt-4 pt-4 border-t border-book-border flex items-center justify-between">
-                <div class="flex items-center space-x-4 flex-1 overflow-hidden filter-tray overflow-x-auto pb-2">
-                    <span class="text-sm font-medium text-book-text whitespace-nowrap" data-i18n="filter_by">Filtrar por:</span>
-                    <select id="disciplineFilter" class="text-sm bg-[#E0D5BE] text-book-text font-bold border-2 border-[#A89A86] rounded-none shadow-sm focus:ring-book-border focus:border-book-border py-1.5 pl-3 pr-8">
-                        <option value="all" data-i18n="all_disciplines">All disciplines</option>
-                        <!-- Options injected by JS -->
-                    </select>
-                    
-                    
-                </div>
-            </div>
-        </div>
-                  <div class="mt-6 border-b border-book-border">
-                  <nav class="-mb-px flex space-x-8">
-                      <button id="btnTabList" onclick="switchTab('list')" data-i18n="tab_list" class="border-book-title text-book-text whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
-                          Catalog
-                      </button>
-                      <button id="btnTabGraph" onclick="switchTab('graph')" data-i18n="tab_graph" class="border-transparent text-book-text opacity-70 hover:opacity-100 hover:border-book-border whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm">
-                          Relationship Graph
-                      </button>
-                  </nav>
-              </div>
-</header>
+<body class="bg-ataraxis-canvas text-ataraxis-textBody min-h-screen flex flex-col">
 
-    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- VISTA DE GRAFO -->
+    <!-- Top Ataraxis System Header -->
+    <header class="bg-ataraxis-canvas/90 backdrop-blur-md sticky top-0 z-20 border-b border-ataraxis-border transition-all">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            
+            <!-- Brand Title & System Tag -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 rounded-full bg-ataraxis-primary shadow-[0_0_8px_rgba(18,60,59,0.5)] animate-pulse"></div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-extrabold text-ataraxis-primary tracking-tight" data-i18n="title">
+                            OpenAI Math Explorer
+                        </h1>
+                        <p class="text-xs font-medium text-ataraxis-textMuted tracking-normal">
+                            High-Assurance Scientific Index &bull; Mathematical Result Graph
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs (Ataraxis Segmented Control) -->
+                <div class="bg-[#EAE6E1] p-1 rounded-xl inline-flex border border-ataraxis-border shadow-inner">
+                    <button id="btnTabList" onclick="switchTab('list')" data-i18n="tab_list" class="px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-ataraxis-primary text-white">
+                        Catalog
+                    </button>
+                    <button id="btnTabGraph" onclick="switchTab('graph')" data-i18n="tab_graph" class="px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-ataraxis-textMuted hover:text-ataraxis-primary">
+                        Relationship Graph
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Controls Bar -->
+            <div class="mt-4 pt-3 border-t border-ataraxis-borderSoft flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3 overflow-x-auto pb-1 max-w-full">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-ataraxis-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        <span class="text-xs font-bold text-ataraxis-primary uppercase tracking-wider whitespace-nowrap" data-i18n="filter_by">
+                            Filter by:
+                        </span>
+                    </div>
+
+                    <div class="relative inline-block">
+                        <select id="disciplineFilter" class="appearance-none text-xs font-semibold bg-white text-ataraxis-textDark border border-ataraxis-border hover:border-ataraxis-primary focus:border-ataraxis-primary focus:ring-1 focus:ring-ataraxis-primary rounded-lg py-2 pl-3 pr-8 shadow-sm cursor-pointer transition-all">
+                            <option value="all" data-i18n="all_disciplines">All disciplines</option>
+                            <!-- Dynamically injected -->
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-ataraxis-textMuted">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="stats" class="text-xs font-medium text-ataraxis-textMuted tracking-tight" data-i18n="loading">
+                    Loading telemetry...
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        
+        <!-- RELATIONSHIP GRAPH VIEW -->
         <div id="graphView" class="hidden">
-            <div id="networkGraph" class="w-full h-[600px] bg-[#FCFAF5] border border-book-border shadow-sm"></div>
+            <div class="mb-4 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-ataraxis-primary tracking-tight">Interactive Topological Discipline Graph</h2>
+                    <p class="text-xs text-ataraxis-textMuted">Drag nodes to explore interconnectivity across mathematical fields. Scroll to zoom.</p>
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-ataraxis-sage text-ataraxis-sageDark border border-[#B6D4CE]">
+                    Physics engine: ForceAtlas2
+                </span>
+            </div>
+            <div id="networkGraph" class="w-full h-[640px] bg-white border border-ataraxis-border rounded-2xl shadow-sm overflow-hidden"></div>
         </div>
-        
-        <!-- VISTA DE LISTA -->
+
+        <!-- LIST / CATALOG VIEW -->
         <div id="listView">
-        <div id="stats" class="mb-8 text-book-text  text-sm" data-i18n="loading">Loading data...</div>
-        
-        <div id="resultsList" class="space-y-6">
-            <!-- Results will be injected here -->
+            <div id="resultsList" class="space-y-6">
+                <!-- Injected via JavaScript -->
+            </div>
         </div>
+
     </main>
 
-    </div>
-    <footer class="bg-[#FCFAF5] border-t border-book-border mt-12 py-8">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-book-text ">
-            <p class="mb-2 font-medium text-book-text" data-i18n="sources_title">Sources & References</p>
-            <div class="flex flex-wrap justify-center space-x-4">
-                <a href="https://github.com/openai/math" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
-                    GitHub Repository (openai/math)
+    <!-- Ataraxis Scientific Footer -->
+    <footer class="bg-ataraxis-canvas border-t border-ataraxis-border mt-auto py-8 transition-colors">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-ataraxis-textMuted">
+            <div class="flex items-center justify-center space-x-2 mb-3">
+                <span class="w-1.5 h-1.5 rounded-full bg-ataraxis-primary"></span>
+                <p class="font-bold text-ataraxis-primary uppercase tracking-wider" data-i18n="sources_title">
+                    Sources &amp; References
+                </p>
+                <span class="w-1.5 h-1.5 rounded-full bg-ataraxis-primary"></span>
+            </div>
+            
+            <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 font-medium">
+                <a href="https://github.com/DividedZeroH/OpenAI-Math-Explorer" target="_blank" class="text-ataraxis-textDark hover:text-ataraxis-primary hover:underline transition-colors">
+                    GitHub Repository
                 </a>
-                <span class="text-gray-300">|</span>
-                <a href="../README.md" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
+                <span class="text-ataraxis-border">&bull;</span>
+                <a href="../README.md" target="_blank" class="text-ataraxis-textDark hover:text-ataraxis-primary hover:underline transition-colors">
                     README
                 </a>
-                <span class="text-gray-300">|</span>
-                <a href="../overview.pdf" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
+                <span class="text-ataraxis-border">&bull;</span>
+                <a href="../overview.pdf" target="_blank" class="text-ataraxis-textDark hover:text-ataraxis-primary hover:underline transition-colors">
                     Overview PDF
                 </a>
-                <span class="text-gray-300">|</span>
-                <a href="../CONTENTS.md" target="_blank" class="text-book-text hover:text-book-text font-bold hover:underline">
-                    Contents Map
+                <span class="text-ataraxis-border">&bull;</span>
+                <a href="../CONTENTS.md" target="_blank" class="text-ataraxis-textDark hover:text-ataraxis-primary hover:underline transition-colors">
+                    Manuscript Contents
                 </a>
             </div>
+            
+            <p class="mt-4 text-[11px] text-ataraxis-textMuted/70">
+                Ataraxis Visual System &bull; Precision Oncology &amp; Deep-Tech Architecture Applied to Mathematics
+            </p>
         </div>
     </footer>
 
+    <!-- System JavaScript -->
     <script>
         let familiesData = [];
         let currentLang = 'en';
 
         const i18n = {
+            'en': {
+                'title': 'OpenAI Math Explorer',
+                'filter_by': 'Filter by:',
+                'all_disciplines': 'All disciplines',
+                'loading': 'Loading data...',
+                'showing': 'Showing {filtered} result families (out of {total}).',
+                'problem': 'Problem',
+                'documents': 'document(s)',
+                'manuscripts': 'Manuscripts',
+                'toggle_abstract': 'Toggle Abstract',
+                'no_abstract': 'No abstract available.',
+                'lean_title': 'Contains formal Lean verification',
+                'sources_title': 'Sources & References',
+                'tab_list': 'Catalog',
+                'tab_graph': 'Relationship Graph'
+            },
             'es': {
                 'title': 'OpenAI Math Explorer',
                 'filter_by': 'Filtrar por:',
                 'all_disciplines': 'Todas las disciplinas',
-                'only_lean': 'Solo con Lean',
                 'loading': 'Cargando datos...',
                 'showing': 'Mostrando {filtered} familias de resultados (de {total}).',
                 'problem': 'Problema',
@@ -140,39 +270,15 @@
                 'manuscripts': 'Manuscritos',
                 'toggle_abstract': 'Ver/Ocultar Abstract',
                 'no_abstract': 'Sin abstract.',
-                'lean_title': 'Contiene formalización en Lean',
+                'lean_title': 'Contiene verificación formal en Lean',
                 'sources_title': 'Fuentes y Referencias',
                 'tab_list': 'Catálogo',
-                'tab_graph': 'Grafo de Relaciones',
-                'graph_sample': 'Gráfico de Ciclos Algebraicos',
-                'graph_elliptic': 'Curva Elíptica (Ejemplo)',
-                'graph_zeta': 'Ceros de la Función Zeta'
-            },
-            'en': {
-                'title': 'OpenAI Math Explorer',
-                'filter_by': 'Filter by:',
-                'all_disciplines': 'All disciplines',
-                'only_lean': 'Only with Lean',
-                'loading': 'Loading data...',
-                'showing': 'Showing {filtered} result families (out of {total}).',
-                'problem': 'Problem',
-                'documents': 'document(s)',
-                'manuscripts': 'Manuscripts',
-                'toggle_abstract': 'Show/Hide Abstract',
-                'no_abstract': 'No abstract available.',
-                'lean_title': 'Contains Lean formalization',
-                'sources_title': 'Sources & References',
-                'tab_list': 'Catalog',
-                'tab_graph': 'Relationship Graph',
-                'graph_sample': 'Algebraic Cycles Graph',
-                'graph_elliptic': 'Elliptic Curve (Example)',
-                'graph_zeta': 'Zeta Function Zeros'
+                'tab_graph': 'Grafo de Relaciones'
             },
             'pt': {
                 'title': 'Explorador OpenAI Math',
                 'filter_by': 'Filtrar por:',
                 'all_disciplines': 'Todas as disciplinas',
-                'only_lean': 'Apenas com Lean',
                 'loading': 'Carregando dados...',
                 'showing': 'Mostrando {filtered} famílias de resultados (de {total}).',
                 'problem': 'Problema',
@@ -183,43 +289,30 @@
                 'lean_title': 'Contém formalização em Lean',
                 'sources_title': 'Fontes e Referências',
                 'tab_list': 'Catálogo',
-                'tab_graph': 'Grafo de Relações',
-                'graph_sample': 'Gráfico de Ciclos Algébricos',
-                'graph_elliptic': 'Curva Elíptica (Exemplo)',
-                'graph_zeta': 'Zeros da Função Zeta'
+                'tab_graph': 'Grafo de Relações'
             }
         };
 
         function translateUI() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (i18n[currentLang][key]) {
+                if (i18n[currentLang] && i18n[currentLang][key]) {
                     el.textContent = i18n[currentLang][key];
                 }
             });
-            applyFilters(); // Re-render text strings in results
+            applyFilters();
         }
 
-        
-
-        
         function fixMathNotation(text) {
             if (!text) return text;
             return text.replace(/\$\`(.*?)\`\$/g, '\\(\$1\\)');
         }
 
-        
-        
-
         function renderMarkdownLinks(text) {
             if (!text) return text;
-            // Parse Markdown links [Text](URL)
-            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-book-link hover:underline font-bold">$1</a>');
+            return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-ataraxis-primary hover:text-ataraxis-primaryHover underline font-semibold transition-colors">$1</a>');
         }
 
-        
-
-        
         function switchTab(tab) {
             const listBtn = document.getElementById('btnTabList');
             const graphBtn = document.getElementById('btnTabGraph');
@@ -227,17 +320,16 @@
             const graphView = document.getElementById('graphView');
 
             if (tab === 'list') {
-                listBtn.className = "border-book-title text-book-text whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
-                graphBtn.className = "border-transparent text-book-text hover:text-book-text hover:border-book-border whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
+                listBtn.className = "px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-ataraxis-primary text-white";
+                graphBtn.className = "px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-ataraxis-textMuted hover:text-ataraxis-primary";
                 listView.classList.remove('hidden');
                 graphView.classList.add('hidden');
             } else {
-                graphBtn.className = "border-book-title text-book-text whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
-                listBtn.className = "border-transparent text-book-text hover:text-book-text hover:border-book-border whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm";
+                graphBtn.className = "px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm bg-ataraxis-primary text-white";
+                listBtn.className = "px-4 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-ataraxis-textMuted hover:text-ataraxis-primary";
                 listView.classList.add('hidden');
                 graphView.classList.remove('hidden');
                 
-                // Initialize graph if not already done
                 if (!window.graphInitialized && familiesData.length > 0) {
                     initGraph(familiesData);
                     window.graphInitialized = true;
@@ -245,17 +337,12 @@
             }
         }
 
-
         function initGraph(data) {
             function cleanForGraph(str) {
                 if (!str) return "";
-                // Remove HTML tags like <i>
                 str = str.replace(/<[^>]+>/g, '');
-                // Remove the $, `, and \ symbols from math to make it readable plain text
-                str = str.replace(/[\\$\\`\\\\]/g, '');
-                // Replace common math commands
+                str = str.replace(/[\$\`\\]/g, '');
                 str = str.replace(/mathsf|mathbb|mathcal|mathrm/g, '');
-                // Clean up braces
                 str = str.replace(/[{}]/g, '');
                 return str;
             }
@@ -269,8 +356,7 @@
                 for (let n = 0; n < words.length; n++) {
                     const testLine = line + words[n] + ' ';
                     if (testLine.length > width && n > 0) {
-                        result += line + '
-';
+                        result += line + '\n';
                         line = words[n] + ' ';
                     } else {
                         line = testLine;
@@ -281,45 +367,43 @@
             }
             
             const nodes = [];
-
             const edges = [];
             const disciplines = new Set();
             
-            // Collect disciplines
             data.forEach(f => {
                 if(f.discipline) disciplines.add(f.discipline);
             });
 
-            // Create discipline nodes (central hubs)
+            // Central discipline hub nodes in Ataraxis signature Deep Pine
             disciplines.forEach(d => {
                 nodes.push({
                     id: `disc-${d}`,
                     label: d,
                     shape: 'box',
-                    font: { color: '#F4F0E6', face: 'system-ui', size: 16 },
+                    margin: 10,
+                    font: { color: '#FFFFFF', face: 'Plus Jakarta Sans', size: 14, bold: true },
                     color: {
-                        background: '#2D2A26',
-                        border: '#000000',
-                        highlight: { background: '#4A3F35', border: '#000000' }
+                        background: '#123C3B',
+                        border: '#123C3B',
+                        highlight: { background: '#1B4F4E', border: '#123C3B' }
                     },
-                    margin: 10
+                    shapeProperties: { borderRadius: 6 }
                 });
             });
 
-            // Create problem nodes and connect them
+            // Individual paper nodes
             data.forEach(f => {
-                
                 nodes.push({
                     id: f.id,
-                    label: wrapText(f.title, 25),
+                    label: wrapText(f.title, 24),
                     title: cleanForGraph(f.title),
-shape: 'dot',
+                    shape: 'dot',
                     size: 8,
-                    font: { color: '#000000', face: 'system-ui', size: 12 },
+                    font: { color: '#1A1D20', face: 'Plus Jakarta Sans', size: 11 },
                     color: {
-                        background: '#F4F0E6',
-                        border: '#CFC4B4',
-                        highlight: { background: '#FCFAF5', border: '#6B4F2A' }
+                        background: '#D4EDE9',
+                        border: '#123C3B',
+                        highlight: { background: '#EDFBFA', border: '#123C3B' }
                     }
                 });
 
@@ -327,8 +411,8 @@ shape: 'dot',
                     edges.push({
                         from: f.id,
                         to: `disc-${f.discipline}`,
-                        color: { color: '#CFC4B4', highlight: '#6B4F2A' },
-                        width: 1
+                        color: { color: '#B6D4CE', highlight: '#123C3B' },
+                        width: 1.2
                     });
                 }
             });
@@ -338,17 +422,17 @@ shape: 'dot',
             const options = {
                 physics: {
                     forceAtlas2Based: {
-                        gravitationalConstant: -50,
-                        centralGravity: 0.01,
-                        springLength: 100,
+                        gravitationalConstant: -45,
+                        centralGravity: 0.012,
+                        springLength: 95,
                         springConstant: 0.08
                     },
-                    maxVelocity: 50,
+                    maxVelocity: 45,
                     solver: 'forceAtlas2Based',
                     timestep: 0.35,
-                    stabilization: { iterations: 150 }
+                    stabilization: { iterations: 120 }
                 },
-                interaction: { hover: true, tooltipDelay: 200 }
+                interaction: { hover: true, tooltipDelay: 150 }
             };
             new vis.Network(container, graphData, options);
         }
@@ -373,7 +457,7 @@ shape: 'dot',
                 applyFilters();
             } catch (error) {
                 console.error("Error loading data:", error);
-                document.getElementById('stats').innerText = "Error al cargar los datos.";
+                document.getElementById('stats').innerText = "Error loading data.";
             }
         }
 
@@ -385,7 +469,7 @@ shape: 'dot',
 
             families.forEach(family => {
                 const card = document.createElement('div');
-                card.className = 'family-card bg-[#FCFAF5] rounded-none shadow-sm border border-book-border overflow-hidden';
+                card.className = 'family-card bg-ataraxis-card rounded-2xl border border-ataraxis-border shadow-sm overflow-hidden';
                 
                 let papersHtml = family.papers.map((paper, index) => {
                     let abstract = paper.abstract.replace(/&emsp;/g, '').trim();
@@ -394,23 +478,30 @@ shape: 'dot',
                     let paperId = `paper-${family.id}-${index}`;
                     
                     let leanBadge = paper.has_lean 
-                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-none text-xs font-medium bg-pink-600 text-white ml-2 border border-pink-700" title="${lang.lean_title}">Lean</span>`
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#E11D48] text-white ml-2 tracking-wide shadow-sm" title="${lang.lean_title}">LEAN</span>`
                         : '';
 
                     let abstractContent = abstract || lang.no_abstract;
-                    
 
                     return `
-                        <div class="mt-4 pt-4 border-t border-book-border">
-                            <a href="../${paper.url}" target="_blank" class="text-md font-medium text-book-text hover:text-book-text font-bold flex items-center flex-wrap">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                <span>${title}</span>
+                        <div class="mt-3 pt-3 border-t border-ataraxis-borderSoft/80 first:mt-0 first:pt-0 first:border-none">
+                            <div class="flex items-start justify-between gap-3">
+                                <a href="../${paper.url}" target="_blank" class="group flex items-start space-x-2 text-sm font-semibold text-ataraxis-primary hover:text-ataraxis-primaryHover transition-colors flex-1">
+                                    <svg class="w-4 h-4 mt-0.5 text-ataraxis-textMuted group-hover:text-ataraxis-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span>${title}</span>
+                                </a>
                                 ${leanBadge}
-                            </a>
-                            <button onclick="document.getElementById('${paperId}').classList.toggle('expanded')" class="text-xs text-book-text font-bold mt-1 mb-2 hover:text-book-link underline focus:outline-none">
-                                ${lang.toggle_abstract}
-                            </button>
-                            <div id="${paperId}" class="abstract text-sm text-book-text  mt-1 bg-book-bg p-3 rounded-none">
+                            </div>
+                            
+                            <div class="flex items-center mt-1 ml-6 space-x-3">
+                                <button onclick="document.getElementById('${paperId}').classList.toggle('expanded')" class="text-[11px] font-semibold text-ataraxis-textMuted hover:text-ataraxis-primary underline underline-offset-2 transition-colors focus:outline-none">
+                                    ${lang.toggle_abstract}
+                                </button>
+                            </div>
+
+                            <div id="${paperId}" class="abstract text-xs text-ataraxis-textBody mt-2 ml-6 bg-white border border-ataraxis-borderSoft p-3.5 rounded-xl shadow-inner leading-relaxed">
                                 ${abstractContent}
                             </div>
                         </div>
@@ -419,24 +510,44 @@ shape: 'dot',
 
                 card.innerHTML = `
                     <div class="p-6">
-                        <div class="flex items-center justify-between mb-2">
+                        <!-- Top Metadata Tray -->
+                        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
                             <div class="flex items-center space-x-2">
-                                <span class="px-2.5 py-0.5 rounded-none text-xs font-medium bg-blue-900 text-white">
-                                    ${lang.problem} ${family.id}
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-ataraxis-primary text-white tracking-tight">
+                                    #${family.id}
                                 </span>
-                                <span class="px-2.5 py-0.5 rounded-none text-xs font-medium bg-[#FCFAF5] text-book-text font-bold border border-book-border">
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-ataraxis-sage text-ataraxis-sageDark border border-[#B6D4CE]">
                                     ${family.discipline}
                                 </span>
-                                ${family.has_lean ? '<span class="px-2.5 py-0.5 rounded-none text-xs font-medium bg-pink-600 text-white border border-pink-700">Lean</span>' : ''}
+                                ${family.has_lean ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#E11D48] text-white tracking-wide shadow-sm">LEAN</span>' : ''}
                             </div>
-                            <span class="text-xs text-book-text ">${family.papers.length} ${lang.documents}</span>
+                            <span class="text-xs font-medium text-ataraxis-textMuted flex items-center space-x-1">
+                                <svg class="w-3.5 h-3.5 inline text-ataraxis-textMuted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                <span>${family.papers.length} ${lang.documents}</span>
+                            </span>
                         </div>
-                        <h2 class="text-xl font-bold text-book-title mb-2">${fixMathNotation(family.title)}</h2>
-                        <p class="text-sm text-book-text mb-4">${renderMarkdownLinks(fixMathNotation(family.description))}</p>
+
+                        <!-- Result Title -->
+                        <h2 class="text-xl font-bold text-ataraxis-textDark tracking-tight mb-2 hover:text-ataraxis-primary transition-colors">
+                            ${fixMathNotation(family.title)}
+                        </h2>
+
+                        <!-- Result Description with semantic math highlights -->
+                        <p class="text-sm text-ataraxis-textBody leading-relaxed mb-5">
+                            ${renderMarkdownLinks(fixMathNotation(family.description))}
+                        </p>
                         
-                        <div class="bg-book-bg -mx-6 -mb-6 px-6 py-4">
-                            <h3 class="text-sm font-semibold text-book-title uppercase tracking-wider mb-2">${lang.manuscripts}</h3>
-                            ${papersHtml}
+                        <!-- Constituent Manuscripts Drawer -->
+                        <div class="bg-ataraxis-subcard -mx-6 -mb-6 px-6 py-4 border-t border-ataraxis-borderSoft">
+                            <div class="flex items-center space-x-2 mb-3">
+                                <span class="w-2 h-2 rounded-full bg-ataraxis-primary/60"></span>
+                                <h3 class="text-xs font-bold text-ataraxis-textMuted uppercase tracking-wider">
+                                    ${lang.manuscripts}
+                                </h3>
+                            </div>
+                            <div class="space-y-3">
+                                ${papersHtml}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -453,4 +564,20 @@ shape: 'dot',
         function applyFilters() {
             const discipline = document.getElementById('disciplineFilter').value;
             const filtered = familiesData.filter(family => {
-              
+                const matchesDiscipline = (discipline === 'all') || (family.discipline === discipline);
+                return matchesDiscipline;
+            });
+
+            renderResults(filtered, familiesData.length);
+            
+            let statsText = i18n[currentLang]['showing']
+                .replace('{filtered}', filtered.length)
+                .replace('{total}', familiesData.length);
+            document.getElementById('stats').innerText = statsText;
+        }
+
+        document.getElementById('disciplineFilter').addEventListener('change', applyFilters);
+        loadData();
+    </script>
+</body>
+</html>
